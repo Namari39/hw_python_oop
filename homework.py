@@ -1,4 +1,4 @@
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 
 
 @dataclass
@@ -44,12 +44,11 @@ class Training:
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
-        distance = self.get_distance()
-        return (distance / self.duration)
+        return (self.get_distance() / self.duration)
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий."""
-        NotImplementedError
+        raise ('Калории расчитываются в методах дочернего класса')
 
     def show_training_info(self) -> InfoMessage:
         """Вернуть информационное сообщение о выполненной тренировке."""
@@ -70,16 +69,16 @@ class Running(Training):
 
     def get_spent_calories(self) -> float:
         """Получить количество затраченных калорий. Running"""
-        speed: float = super().get_mean_speed()
+        speed: float = self.get_mean_speed()
         duration_min: float = self.duration * self.H_IN_M
-        calories: float = (
+        return (
             (
                 self.CALORIES_MEAN_SPEED_MULTIPLIER
-                * speed + self.CALORIES_MEAN_SPEED_SHIFT
+                * speed
+                + self.CALORIES_MEAN_SPEED_SHIFT
             )
             * self.weight / self.M_IN_KM * duration_min
         )
-        return calories
 
 
 class SportsWalking(Training):
@@ -105,18 +104,19 @@ class SportsWalking(Training):
         speed_sec: float = self.get_mean_speed() * self.M_IN_S
         duration_min: float = self.duration * self.H_IN_M
         height_m: float = self.height / self.CENTIMETR_IN_METR
-        calories: float = (
-                          (
-                              self.CALORIES_MEAN_WEIGHT_MULTIPLIER
-                              * self.weight
-                              + (
-                                  speed_sec**2 / height_m
-                              )
-                              * self.CALORIES_MEAN_WEIGHT_SHIFT * self.weight
-                          )
+        return (
+            (
+                self.CALORIES_MEAN_WEIGHT_MULTIPLIER
+                * self.weight
+                + (
+                    speed_sec**2
+                    / height_m
+                )
+                * self.CALORIES_MEAN_WEIGHT_SHIFT
+                * self.weight
+            )
             * duration_min
         )
-        return calories
 
 
 class Swimming(Training):
@@ -161,13 +161,13 @@ TRAINING_TYPE = {'SWM': Swimming,
 def read_package(workout_type: str, data: list) -> Training:
     """Прочитать данные полученные от датчиков."""
     if workout_type not in TRAINING_TYPE:
-        raise ('Данная тренировка не предусмотренна')
+        raise (f'{workout_type} не определена в словаре "TRAINING_TYPE"')
     return TRAINING_TYPE[workout_type](*data)
 
 
 def main(training: Training) -> None:
     """Главная функция."""
-    print(InfoMessage.get_message(Training.show_training_info(training)))
+    print(training.show_training_info().get_message())
 
 
 if __name__ == '__main__':
